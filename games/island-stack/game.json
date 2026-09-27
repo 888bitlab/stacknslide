@@ -1,0 +1,8 @@
+{
+  "name": "Stack n Slide",
+  "consumable": "Unused SDK placeholder",
+  "price": "1",
+  "outcomes": [
+    { "name": "Unused SDK placeholder", "chanceBps": 10000, "reward": "1" }
+  ]
+}

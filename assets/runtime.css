@@ -2,3 +2,10 @@
 .rf-runtime-status p { max-width: 36em; }
 .rf-runtime-connection { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .rf-runtime-connection p { flex-basis: 100%; overflow-wrap: anywhere; }
+.rf-runtime-wallet-options { display: grid; width: 100%; gap: 8px; }
+.rf-runtime-wallet-options > button, .rf-runtime-wallet-others summary { width: 100%; text-align: left; }
+.rf-runtime-wallet-others summary { padding: 8px 12px; border: 1px solid currentColor; cursor: pointer; list-style: none; }
+.rf-runtime-wallet-others summary::-webkit-details-marker { display: none; }
+.rf-runtime-wallet-others summary::after { content: "+"; float: right; }
+.rf-runtime-wallet-others[open] summary::after { content: "−"; }
+.rf-runtime-wallet-others > div { display: grid; gap: 6px; padding: 8px 0 0 12px; }

@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { formatGameAmount } from "./experience-ui.js";
+import { createFriendReader, spriteFrame } from "./friend-sprites.js";
 
 /** Reference viewport dimensions; hosts may choose another layout through frame.css. */
 export const GAME_VIEWPORT = Object.freeze({ width: 960, height: 640 });
@@ -21,8 +22,25 @@ export type GameFrameProps = {
   selectionMode?: "picker" | "host";
   onConnect?: () => void; wallet?: GameWalletState; confirmation?: GameConfirmation | null;
   connection?: ReactNode; walletActions?: ReactNode;
+  onDisconnect?: () => void;
   mode: "preview" | "live"; onMenuChange?: (open: boolean) => void;
 };
+
+function FriendAvatar({ friend }: { friend: GameFriend }) {
+  const [rows, setRows] = useState<readonly string[] | null>(null);
+  useEffect(() => {
+    let active = true;
+    setRows(null);
+    void createFriendReader().read(friend.id).then(sprite => {
+      if (active) setRows(spriteFrame(sprite, "down", false, 0).frame.rows);
+    }).catch(() => undefined);
+    return () => { active = false; };
+  }, [friend.id]);
+  const path = rows?.flatMap((row, y) => [...row].flatMap((pixel, x) => pixel === "#" ? [`M${x} ${y}h1v1h-1z`] : [])).join("");
+  return <svg className="rf-frame-avatar" viewBox="0 0 16 16" aria-hidden="true" shapeRendering="crispEdges">
+    <rect width="16" height="16" fill="white" />{path && <path d={path} fill="black" />}
+  </svg>;
+}
 
 /** An in-frame menu. Never portals into the website or opens a viewport-sized dialog. */
 export function GameMenu({ title, onClose, children, footer }: { title: string; onClose?: () => void; children: ReactNode; footer?: ReactNode }) {
@@ -49,19 +67,23 @@ export function GameMenu({ title, onClose, children, footer }: { title: string; 
   </div></div>;
 }
 
-export function GameFrame({ children, friends, selectedFriendId, onSelectFriend, friendsLoading, friendsError, friendsEmptyMessage = "No playable Friends found.", friendsHiddenCount = 0, onConnect, wallet, confirmation, connection, walletActions, selectionMode = "picker", mode, onMenuChange }: GameFrameProps) {
-  const [menu, setMenu] = useState<"friends" | "wallet" | null>(null);
+export function GameFrame({ children, friends, selectedFriendId, onSelectFriend, friendsLoading, friendsError, friendsEmptyMessage = "No playable Friends found.", friendsHiddenCount = 0, onConnect, onDisconnect, wallet, confirmation, connection, walletActions, selectionMode = "picker", mode, onMenuChange }: GameFrameProps) {
+  const [menu, setMenu] = useState<"friends" | "profile" | null>(null);
   const friend = friends.find(value => value.id === selectedFriendId);
   const selecting = selectionMode === "picker" && (!friend || menu === "friends");
-  const menuOpen = selecting || menu === "wallet" || Boolean(confirmation);
+  const menuOpen = selecting || menu === "profile" || Boolean(confirmation);
+  const rfBalanceLabel = `Selected Friend’s ${mode === "preview" ? "simulated " : ""}$RAREFRIENDS balance`;
   useEffect(() => { onMenuChange?.(menuOpen); }, [menuOpen, onMenuChange]);
   return <section className="rf-game-frame" aria-label="Game container" data-mode={mode}>
     <div className="rf-frame-chrome" inert={menuOpen || undefined}>
       <div className="rf-frame-toolbar">
-        <span className="rf-frame-mode">{mode === "preview" ? "Local preview" : "Live · Robinhood"}</span>
-        {selectionMode === "host" ? <span className="rf-frame-selected-friend">{friend?.label ?? "Choose a Friend"}</span>
-          : <button type="button" onClick={() => setMenu("friends")} aria-label="Choose Friend">{friend?.label ?? "Choose Friend"}</button>}
-        <button type="button" onClick={() => setMenu("wallet")} disabled={!friend} aria-label="Open Friend wallet">Friend wallet</button>
+        {friend ? <button type="button" className="rf-frame-profile" onClick={() => setMenu("profile")} aria-label={`Open ${friend.label} profile`} title={friend.label}><FriendAvatar friend={friend} /><span className="rf-frame-sr-only">{friend.label}</span></button>
+          : selectionMode === "host" ? <span className="rf-frame-selected-friend">Choose a Friend</span>
+            : <button type="button" onClick={() => setMenu("friends")} aria-label="Choose Friend">Choose Friend</button>}
+        {friend && wallet && <span className="rf-frame-rf-balance" role="status" title={rfBalanceLabel}
+          aria-label={`${rfBalanceLabel}: ${wallet.status === "loading" ? "loading" : wallet.balance === undefined ? "unavailable" : `${formatGameAmount(wallet.balance, 18)} RF`}`}>
+          <small>{mode === "preview" ? "SIM RF BALANCE" : "RF BALANCE"}</small><b>{wallet.status === "loading" ? "…" : wallet.balance === undefined ? "—" : formatGameAmount(wallet.balance, 18)}</b>
+        </span>}
       </div>
       <div className="rf-frame-viewport">{children}</div>
     </div>
@@ -72,7 +94,7 @@ export function GameFrame({ children, friends, selectedFriendId, onSelectFriend,
       <p>{friend?.label}</p><p className="rf-frame-note">{mode === "preview" ? "Simulated RF. No transaction will be sent." : "This action uses the selected Friend’s canonical wallet. A result is confirmed only after its receipt."}</p>
       {confirmation.error && <p role="alert">{confirmation.error}</p>}
     </GameMenu> : selecting ? <GameMenu title="Choose your Friend" onClose={friend ? () => setMenu(null) : undefined}>
-      <p>{mode === "preview" ? !friends.some(value => value.kind === "sample") ? "Choose your Friend for this local preview. Balances, items and outcomes are simulated." : "Choose a sample Friend. Each has separate simulated balances and items." : "Choose an owned, hardwired Generations NFT. Its inventory and RF stay with its wallet."}</p>
+      {!connection && <p>{mode === "preview" ? !friends.some(value => value.kind === "sample") ? "Choose your Friend for this local preview. Balances, items and outcomes are simulated." : "Choose a sample Friend. Each has separate simulated balances and items." : "Choose an owned, hardwired Generations NFT. Its inventory and RF stay with its wallet."}</p>}
       {connection}
       {friendsLoading && <p role="status">Loading your Friends…</p>}
       {friendsError && <p role="alert">{friendsError}</p>}
@@ -80,13 +102,12 @@ export function GameFrame({ children, friends, selectedFriendId, onSelectFriend,
       {!friendsLoading && !friendsError && friendsHiddenCount > 0 && <p>{friendsHiddenCount} {friendsHiddenCount === 1 ? "Friend" : "Friends"} hidden: not hardwired (generation 0). Playing requires generation 1 or higher.</p>}
       {!friendsLoading && !friendsError && !friends.length && friendsEmptyMessage && <p>{friendsEmptyMessage}</p>}
       {onConnect && <button type="button" className="rf-frame-primary" onClick={onConnect}>Connect wallet</button>}
-    </GameMenu> : menu === "wallet" ? <GameMenu title="Friend wallet" onClose={() => setMenu(null)}>
-      <h3>{friend?.label}</h3><p>{mode === "preview" ? "Preview balance. RF is simulated and no transactions are sent." : "Items and RF belong to this Friend’s canonical wallet."}</p>
-      {friend?.walletAddress && <p className="rf-frame-address">{friend.walletAddress}</p>}
-      {wallet?.status === "loading" ? <p role="status">Loading RF balance…</p> : wallet?.balance !== undefined ? <p className="rf-frame-wallet-balance">{formatGameAmount(wallet.balance, 18)} RF</p> : <p>RF balance unavailable.</p>}
-      {wallet?.error && <p role="alert">{wallet.error}</p>}
-      {walletActions}
-      {selectionMode === "picker" && <button type="button" onClick={() => setMenu("friends")}>Change Friend</button>}
+    </GameMenu> : menu === "profile" && friend ? <GameMenu title="Friend profile" onClose={() => setMenu(null)}>
+      <div className="rf-frame-profile-summary"><FriendAvatar friend={friend} /><h3>{friend.label}</h3></div>
+      <div className="rf-frame-profile-actions">
+        <button type="button" disabled={selectionMode !== "picker" || !onSelectFriend} onClick={() => setMenu("friends")}>Select a new Friend</button>
+        <button type="button" disabled={!onDisconnect} onClick={() => { setMenu(null); onDisconnect?.(); }}>Disconnect wallet</button>
+      </div>
     </GameMenu> : null}
   </section>;
 }

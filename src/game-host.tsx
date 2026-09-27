@@ -66,6 +66,16 @@ function WalletViewport({ session, publicClient, ...props }: Omit<GameHostProps,
     discovery.client === publicClient && discovery.session === session && discovery.attempt === attempt ? discovery : null;
   const friends = valid?.friends ?? [];
   const friend = friends.find(value => value.id === selected) ?? null;
+  const walletGroups = useMemo(() => {
+    const groups = new Map<string, (typeof wallet.wallets)[number][]>();
+    for (const choice of wallet.wallets) {
+      const name = choice.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const group = name.includes("rabby") ? "Rabby" : name.includes("metamask") ? "MetaMask"
+        : name.includes("rainbow") ? "Rainbow" : "Others";
+      groups.set(group, [...(groups.get(group) ?? []), choice]);
+    }
+    return groups;
+  }, [wallet.wallets]);
   useEffect(() => {
     setSelected(null);
     if (wallet.status !== "connected" || !wallet.account) return;
@@ -80,20 +90,26 @@ function WalletViewport({ session, publicClient, ...props }: Omit<GameHostProps,
   }, [session, publicClient, wallet.status, wallet.account, wallet.revision, attempt]);
   const connection = <div className="rf-runtime-connection">
     {wallet.status === "unavailable" && <><p>No browser wallet found. Enable your wallet extension or open this game in your wallet’s browser.</p><button type="button" onClick={() => { void session.connect(); }}>Check for wallet</button></>}
-    {wallet.status === "disconnected" && <p>Connect your wallet to find your Friends on Robinhood.</p>}
     {wallet.status === "connecting" && <p role="status">Connecting wallet…</p>}
     {wallet.status === "switching-network" && <button type="button" disabled>Switching network… Check your wallet</button>}
     {wallet.status === "wrong-network" && <p role="alert">Your wallet is on {wallet.chainId === 1 ? "Ethereum mainnet" : `chain ${wallet.chainId}`}. Switch to Robinhood mainnet (4663) to load your Friends.</p>}
     {wallet.error && <p role="alert">{wallet.error}</p>}
     {wallet.account && <p>Connected: {wallet.account}</p>}
-    {(wallet.status === "disconnected" || wallet.status === "error") && wallet.wallets.map(value =>
-      <button key={value.id} type="button" onClick={() => { void session.connect(value.id); }}>{wallet.wallets.length === 1 ? "Connect wallet" : `Connect ${value.name}`}</button>)}
-    {wallet.account && <button type="button" onClick={() => session.disconnect()}>Disconnect</button>}
+    {(wallet.status === "disconnected" || wallet.status === "error") && <div className="rf-runtime-wallet-options" aria-label="Choose a wallet">
+      {["Rabby", "MetaMask", "Rainbow"].map(group => walletGroups.get(group)?.map(value =>
+        <button key={value.id} type="button" onClick={() => { void session.connect(value.id); }}>Continue with {group}</button>))}
+      {walletGroups.has("Others") && <details className="rf-runtime-wallet-others">
+        <summary>Others{walletGroups.get("Others")!.length > 1 ? ` (${walletGroups.get("Others")!.length})` : ""}</summary>
+        <div>{walletGroups.get("Others")!.map(value => <button key={value.id} type="button" onClick={() => { void session.connect(value.id); }}>{value.name}</button>)}</div>
+      </details>}
+      {!wallet.wallets.length && <p>No wallet detected. Open this game in your wallet browser or enable a wallet extension.</p>}
+    </div>}
     {wallet.status === "connected" && <button type="button" onClick={() => setAttempt(value => value + 1)}>{valid?.error ? "Retry loading Friends" : "Refresh Friends"}</button>}
     {wallet.status === "wrong-network" && <><button type="button" className="rf-frame-primary" onClick={() => { void session.switchNetwork(); }}>Switch to Robinhood</button><button type="button" onClick={() => { void session.refresh(); }}>Check network</button></>}
   </div>;
   return <ConnectedViewport {...props} selectedFriend={friend} account={wallet.account} chainId={wallet.chainId}
     publicClient={publicClient} revision={wallet.revision} walletClient={walletClient} assertActive={assertWalletActive} picker={{ friends, onSelectFriend: setSelected, connection,
+      onDisconnect: () => session.disconnect(),
       friendsLoading: wallet.status === "connected" && !valid, friendsError: valid?.error,
       friendsHiddenCount: valid?.hiddenCount,
       friendsEmptyMessage: valid && !valid.error ? valid.hiddenCount ? "No eligible Friends available in this wallet." : "No Rare Friends Generations NFTs found in this wallet on Robinhood." : null }} />;
@@ -116,7 +132,7 @@ export type ConnectedGameHostProps = {
   walletClient?: ChanceWalletClient;
   assertActive?: () => void;
 };
-type Picker = Pick<GameFrameProps, "friends" | "onSelectFriend" | "connection" | "friendsLoading" | "friendsError" | "friendsEmptyMessage" | "friendsHiddenCount" | "onConnect">;
+type Picker = Pick<GameFrameProps, "friends" | "onSelectFriend" | "onDisconnect" | "connection" | "friendsLoading" | "friendsError" | "friendsEmptyMessage" | "friendsHiddenCount" | "onConnect">;
 
 /** SDK frame for a project that already supplies connection and selection. */
 export function ConnectedGameHost(props: ConnectedGameHostProps) { return <ConnectedViewport {...props} />; }

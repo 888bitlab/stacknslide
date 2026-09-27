@@ -1,11 +1,17 @@
 .rf-game-frame { position: relative; isolation: isolate; contain: layout paint; box-sizing: border-box; container-type: inline-size; width: 100%; max-width: var(--rf-game-max-width, 960px); aspect-ratio: var(--rf-game-aspect-ratio, 3 / 2); min-width: 0; overflow: hidden; color: #111; background: #eee; border: 1px solid #111; font: 12px/1.4 ui-monospace, monospace; }
 .rf-game-frame *, .rf-frame-scrim * { box-sizing: border-box; }
 .rf-frame-chrome { position: absolute; inset: 0; display: flex; flex-direction: column; min-height: 0; }
-.rf-frame-toolbar { position: absolute; z-index: 2; left: 14px; right: 70px; bottom: 14px; min-width: 0; display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.rf-frame-toolbar { position: absolute; z-index: 2; left: 14px; right: 14px; bottom: 14px; min-width: 0; display: flex; align-items: center; gap: 8px; pointer-events: none; }
 .rf-frame-toolbar > * { pointer-events: auto; border: 1px solid #111; background: #eee; padding: 6px 8px; }
 .rf-frame-mode { min-width: 0; font: 11px ui-monospace, monospace; }
 .rf-frame-toolbar button { max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rf-frame-selected-friend { max-width: 38%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rf-frame-toolbar > .rf-frame-profile { display: grid; place-items: center; width: 44px; height: 44px; max-width: none; padding: 5px; border: 1px solid #fff; background: #080808; box-shadow: 3px 3px 0 #555; }
+.rf-frame-toolbar > .rf-frame-rf-balance { display: flex; align-items: baseline; gap: 6px; padding: 8px 10px; border: 0; background: transparent; color: #fff; box-shadow: none; white-space: nowrap; }
+.rf-frame-rf-balance small { color: #aaa; font: 700 8px system-ui, sans-serif; letter-spacing: .1em; }
+.rf-frame-rf-balance b { font: 700 12px ui-monospace, monospace; }
+.rf-frame-avatar { display: block; width: 30px; height: 30px; image-rendering: pixelated; }
+.rf-frame-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
 .rf-frame-viewport { position: relative; flex: 1; min-width: 0; min-height: 0; overflow: hidden; }
 .rf-frame-viewport > iframe { width: 100%; height: 100%; display: block; border: 0; }
 .rf-game-frame button, .rf-frame-scrim button { padding: 8px 12px; min-height: 36px; border: 1px solid #111; background: #eee; color: #111; font: inherit; cursor: pointer; }
@@ -25,8 +31,32 @@
 .rf-frame-friends button { display: flex; flex-direction: column; align-items: flex-start; text-align: left; gap: 6px; min-height: 76px; }
 .rf-frame-friends button[aria-pressed="true"] { background: #ddd; }
 .rf-frame-friends small, .rf-frame-note { font-size: 12px; }
+.rf-frame-profile-summary { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.rf-frame-profile-summary .rf-frame-avatar { width: 48px; height: 48px; border: 1px solid #111; }
+.rf-frame-profile-summary h3 { margin: 0; }
+.rf-frame-profile-actions { display: grid; gap: 10px; }
+.rf-frame-profile-actions button { width: 100%; text-align: left; }
 .rf-frame-address { overflow-wrap: anywhere; font: 12px ui-monospace, monospace; }
 .rf-frame-wallet-balance { font: bold 28px ui-monospace, monospace; }
 .rf-game-frame .rf-frame-primary, .rf-frame-scrim .rf-frame-primary { background: #111; color: #eee; }
+.rf-game-frame[data-mode="preview"] .rf-frame-scrim { background: #050505e8; color: #f5f5f5; }
+.rf-game-frame[data-mode="preview"] .rf-frame-menu { max-width: 440px; border: 2px solid #f5f5f5; background: #050505; color: #f5f5f5; box-shadow: 6px 6px 0 #555; }
+.rf-game-frame[data-mode="preview"] .rf-frame-menu-heading { padding: 14px 18px; border-color: #555; }
+.rf-game-frame[data-mode="preview"] .rf-frame-menu-heading h2 { font: 700 16px/1.3 ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.rf-game-frame[data-mode="preview"] .rf-frame-menu-body { padding: 18px; }
+.rf-game-frame[data-mode="preview"] .rf-frame-menu-body p { color: #aaa; }
+.rf-game-frame[data-mode="preview"] .rf-frame-friends { margin-block: 12px; }
+.rf-game-frame[data-mode="preview"] .rf-frame-friends button,
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-options button,
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-others summary { border: 1px solid #777; background: #101010; color: #f5f5f5; }
+.rf-game-frame[data-mode="preview"] .rf-frame-friends button:hover,
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-options button:hover { background: #222; }
+.rf-game-frame[data-mode="preview"] .rf-frame-friends button[aria-pressed="true"] { border-color: #fff; background: #222; }
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-options button { width: 100%; text-align: left; }
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-others > div { padding-left: 10px; }
+.rf-game-frame[data-mode="preview"] .rf-runtime-wallet-others > div button { border-color: #444; background: #080808; }
+.rf-game-frame[data-mode="preview"] .rf-runtime-status { background: #050505; color: #f5f5f5; }
+.rf-game-frame[data-mode="preview"] .rf-runtime-connection { margin-top: 12px; }
+.rf-game-frame[data-mode="preview"] .rf-frame-primary { border-color: #f5f5f5; background: #f5f5f5; color: #050505; }
 @container (max-width: 520px) { .rf-frame-scrim { padding: 6px; } .rf-frame-menu-heading { padding: 6px 10px; } .rf-frame-menu-body { padding: 10px; } }
-@media (max-width: 520px) { .rf-frame-scrim { padding: 6px; } .rf-frame-menu-heading { padding: 6px 10px; } .rf-frame-menu-body { padding: 10px; } .rf-frame-toolbar { left: 6px; bottom: 6px; right: 42px; gap: 4px; font-size: 9px; } .rf-frame-mode { font-size: 9px; } .rf-frame-toolbar button { padding-inline: 7px; } }
+@media (max-width: 520px) { .rf-frame-scrim { padding: 6px; } .rf-frame-menu-heading { padding: 6px 10px; } .rf-frame-menu-body { padding: 10px; } .rf-frame-toolbar { left: 6px; bottom: 6px; right: 6px; gap: 4px; font-size: 9px; } .rf-frame-toolbar button { padding-inline: 7px; } .rf-frame-toolbar > .rf-frame-profile { width: 38px; height: 38px; padding: 4px; } .rf-frame-toolbar > .rf-frame-profile .rf-frame-avatar { width: 26px; height: 26px; } }
