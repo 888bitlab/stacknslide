@@ -217,6 +217,7 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
   const live = useRef({ paused, reduced: false }), lastFrame = useRef(0), clockFrame = useRef(0), dropping = useRef(false), [, redraw] = useState(0);
   const [generationReady, setGenerationReady] = useState(false), [generationError, setGenerationError] = useState(""), [reducedMotion, setReducedMotion] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [elapsed, setElapsed] = useState(0), [count, setCount] = useState(0), [best, setBest] = useState(0), [runStarted, setRunStarted] = useState(false);
   const [leaderboard, setLeaderboard] = useState<ScoreEntry[]>([]);
   live.current = { paused, reduced: reducedMotion };
@@ -402,8 +403,11 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
     <button type="button" className="sound-toggle" aria-label={soundEnabled ? "Mute sound" : "Turn sound on"} aria-pressed={soundEnabled} onClick={toggleSound} title={soundEnabled ? "Sound on" : "Sound off"}>
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9H3Z" fill="currentColor" />{soundEnabled ? <path d="M15 9a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" /> : <path d="m15 9 6 6m0-6-6 6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" />}</svg>
     </button>
-    <aside className="leaderboard" aria-label="Top 10 players">
-      <div className="leaderboard-heading"><b>TOP PLAYERS</b></div>
+    <button type="button" className="leaderboard-toggle" aria-expanded={leaderboardOpen} aria-controls="stack-leaderboard" onClick={() => setLeaderboardOpen(open => !open)}>
+      TOP 10 <span aria-hidden="true">{leaderboardOpen ? "×" : "+"}</span>
+    </button>
+    <aside id="stack-leaderboard" className={`leaderboard${leaderboardOpen ? " mobile-open" : ""}`} aria-label="Top 10 players">
+      <div className="leaderboard-heading"><b>TOP PLAYERS</b><button type="button" className="leaderboard-close" aria-label="Close leaderboard" onClick={() => setLeaderboardOpen(false)}>×</button></div>
       <ol>{Array.from({ length: 10 }, (_, index) => {
         const entry = leaderboard[index];
         const prize = [25, 10, 5][index];

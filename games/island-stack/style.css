@@ -18,3 +18,12 @@
 @media(max-width:600px){.leaderboard{top:100px;right:9px;bottom:auto;width:142px;padding:6px 7px}.leaderboard-heading{padding-bottom:4px}.leaderboard-heading b{font-size:9px}.leaderboard ol{margin-top:2px}.leaderboard li{grid-template-columns:17px 1fr auto 27px;gap:3px;min-height:15px;font-size:7px}.leaderboard .rank{font-size:7px}.leaderboard .score-player{font-size:5.5px}.leaderboard li>b{font-size:8px}.leaderboard-prize{font-size:6px}}
 .sound-toggle{left:auto;right:14px;bottom:14px}
 @media(max-width:600px){.sound-toggle{left:auto;right:10px;bottom:9px;top:auto}}
+.leaderboard-toggle,.leaderboard-close{display:none}
+@media(max-width:600px){
+  .leaderboard-toggle{position:absolute;z-index:3;display:flex;align-items:center;gap:8px;top:70px;right:10px;min-height:30px;padding:5px 9px;border:1px solid #777;background:#080808;color:#fff;font:700 9px "Courier New",monospace;letter-spacing:.08em;cursor:pointer}
+  .leaderboard-toggle span{font:700 14px/1 system-ui,sans-serif}
+  .leaderboard{display:none;top:108px;right:10px;bottom:auto;width:min(220px,calc(100vw - 20px));max-height:min(250px,calc(100% - 125px));overflow:auto;pointer-events:auto}
+  .leaderboard.mobile-open{display:block}
+  .leaderboard-heading{align-items:center}
+  .leaderboard-close{display:grid;place-items:center;width:24px;height:24px;padding:0;border:1px solid #555;background:#111;color:#fff;font:20px/1 system-ui,sans-serif;cursor:pointer}
+}
