@@ -5,7 +5,7 @@ import type { GameComponentProps } from "@rarefriends/friendsdk/runtime";
 import { createFriendReader, spriteFrame, type GenerationSprites } from "@rarefriends/friendsdk/sprites";
 import "./style.css";
 
-const W = 960, H = 640, ISLAND_X = 480, ISLAND_TOP = 460, ISLAND_HALF = 245;
+const W = 960, H = 640, ISLAND_X = 480, ISLAND_TOP = 450, ISLAND_HALF = 245;
 const R = 23, ROUND_SECONDS = 30, DROP_COOLDOWN = 180, RIDER_JUMP_UP_MS = 100, RIDER_JUMP_MS = 280;
 const SPRITE_POOL_TARGET = 16, SPRITE_POOL_READY = 8;
 type Buddy = { id: number; sprite: GenerationSprites; x: number; y: number; vx: number; vy: number; rotation: number; spin: number; landed: boolean; squash: number; animPhase: number };
@@ -108,7 +108,7 @@ function drawScene(ctx: CanvasRenderingContext2D, game: Game, riderSprite: Gener
   const zoom = cameraZoom(game);
   ctx.save(); ctx.translate(ISLAND_X, ISLAND_TOP); ctx.scale(zoom, zoom); ctx.translate(-ISLAND_X, -ISLAND_TOP);
   // A level white deck sits above a chunky, floating pixel-rock underside.
-  ctx.save(); ctx.translate(0, 60);
+  ctx.save(); ctx.translate(0, 100);
   ctx.save(); ctx.shadowColor = "rgba(255,255,255,.12)"; ctx.shadowBlur = 26;
   ctx.fillStyle = "#000"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(190, 400); ctx.lineTo(770, 400); ctx.lineTo(770, 432); ctx.lineTo(690, 452); ctx.lineTo(620, 468); ctx.lineTo(550, 452); ctx.lineTo(480, 470); ctx.lineTo(410, 452); ctx.lineTo(340, 468); ctx.lineTo(270, 452); ctx.lineTo(190, 432); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
