@@ -6,7 +6,7 @@ import { createFriendReader, spriteFrame, type GenerationSprites } from "@rarefr
 import "./style.css";
 
 const W = 960, H = 640, ISLAND_X = 480, ISLAND_TOP = 450, ISLAND_HALF = 245;
-const R = 23, ROUND_SECONDS = 30, DROP_COOLDOWN = 180, RIDER_JUMP_UP_MS = 100, RIDER_JUMP_MS = 280;
+const R = 23, ROUND_SECONDS = 30, DROP_COOLDOWN = 180, MAX_FRIENDS_ON_SCREEN = 110, RIDER_JUMP_UP_MS = 100, RIDER_JUMP_MS = 280;
 const SPRITE_POOL_TARGET = 16, SPRITE_POOL_READY = 8;
 type Buddy = { id: number; sprite: GenerationSprites; x: number; y: number; vx: number; vy: number; rotation: number; spin: number; landed: boolean; squash: number; animPhase: number };
 type ScoreEntry = { score: number; playedAt: number; friendId: string };
@@ -205,6 +205,9 @@ function simulate(game: Game, dt: number) {
       }
     }
   }
+  // Remove Friends that have fallen well past the playfield. They cannot affect
+  // the stack or score, and keeping them would eventually block further drops.
+  game.friends = game.friends.filter(friend => friend.x >= -R * 2 && friend.x <= W + R * 2 && friend.y <= H + R * 2);
 }
 
 /** A gravity stacking game with generated Rare Friends sprite variants. */
@@ -300,14 +303,14 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
 
   const drop = useCallback(async () => {
     const game = world.current, now = performance.now(), reader = readerRef.current;
-    if (dropping.current || game.pendingDrop || live.current.paused || !generationReady || !reader || game.startedAt === null || game.endedAt !== null || now - game.lastDrop < DROP_COOLDOWN || game.friends.length >= 45) return;
+    if (dropping.current || game.pendingDrop || live.current.paused || !generationReady || !reader || game.startedAt === null || game.endedAt !== null || now - game.lastDrop < DROP_COOLDOWN || game.friends.length >= MAX_FRIENDS_ON_SCREEN) return;
     dropping.current = true; setGenerationError("");
     const pending: PendingDrop = { sprite: null, x: game.aim, startedAt: now, spin: (Math.random() < .5 ? -1 : 1) * (.65 + Math.random() * .25), animPhase: Math.random() * 1200 };
     game.pendingDrop = pending; game.lastDrop = now;
     try {
       const buffered = spritePoolRef.current.shift();
       const { sprite, signature } = buffered ?? await generateUniqueFriend(reader, new Set([...game.usedSprites, ...spritePoolRef.current.map(item => item.signature)]));
-      if (world.current !== game || game.pendingDrop !== pending || game.endedAt !== null || game.friends.length >= 45) return;
+      if (world.current !== game || game.pendingDrop !== pending || game.endedAt !== null || game.friends.length >= MAX_FRIENDS_ON_SCREEN) return;
       game.usedSprites.add(signature);
       pending.sprite = sprite;
       void fillSpritePool();
