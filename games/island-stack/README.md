@@ -1,4 +1,4 @@
-# Stack n Slide
+# Rare Friends Island Stack
 
 A short physics game for Rare Friends. Generated character variants in the
 collection's official visual style are dropped onto a floating island. Keep the

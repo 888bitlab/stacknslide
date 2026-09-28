@@ -405,10 +405,10 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
   const remaining = Math.max(0, ROUND_SECONDS - elapsed);
   const survivors = countSurvivors(world.current);
 
-  return <main className="island-game" aria-label="Stack n Slide">
+  return <main className="island-game" aria-label="Rare Friends Island Stack">
     <canvas ref={canvas} className="island-canvas" width={W} height={H} aria-label="Move the pointer to aim; after starting, click anywhere to drop a Friend. Press Space to drop." onPointerMove={moveAim} onPointerDown={tapField} />
     <header className="island-topbar">
-      <div className="brand"><span><small>RARE FRIENDS · ARCADE</small><b className="pixel-title"><PixelText text="STACK N" /><PixelText text="SLIDE" /></b></span></div>
+      <div className="brand"><span><small>RARE FRIENDS · ARCADE</small><b className="pixel-title"><PixelText text="RARE FRIENDS" /><PixelText text="ISLAND" /><PixelText text="STACK" /></b></span></div>
       <div className="island-stat"><small>STILL STANDING</small><b>{world.current.endedAt !== null ? count : survivors}</b></div>
       <div className={`island-timer${remaining <= 10 && runStarted ? " urgent" : ""}`}><small>{runStarted ? "TIME LEFT" : "YOUR RUN"}</small><b>{remaining}<em> SEC</em></b></div>
     </header>
@@ -432,7 +432,7 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
     {generationError && <div className="game-alert" role="alert">{generationError}</div>}
     {world.current.endedAt === null && !runStarted && <div className="start-overlay"><button type="button" className="drop-button start-button" disabled={!generationReady || paused} onClick={startRun}>{generationReady ? "START GAME" : "PREPARING…"}<b>→</b></button></div>}
     {world.current.endedAt !== null && <div className="game-over-overlay" role="dialog" aria-modal="true" aria-labelledby="game-over-title">
-      <section className="game-over-card"><small>STACK N SLIDE</small><h1 id="game-over-title">GAME OVER</h1><p className="score-label">TOTAL SCORE</p><strong className="final-score">{count}</strong><p className="score-caption">FRIEND{count === 1 ? "" : "S"} HELD ON THE ISLAND</p><button type="button" className="drop-button play-again-button" onClick={playAgain}>PLAY AGAIN <b>→</b></button></section>
+      <section className="game-over-card"><small>RARE FRIENDS ISLAND STACK</small><h1 id="game-over-title">GAME OVER</h1><p className="score-label">TOTAL SCORE</p><strong className="final-score">{count}</strong><p className="score-caption">FRIEND{count === 1 ? "" : "S"} HELD ON THE ISLAND</p><button type="button" className="drop-button play-again-button" onClick={playAgain}>PLAY AGAIN <b>→</b></button></section>
     </div>}
   </main>;
 }
