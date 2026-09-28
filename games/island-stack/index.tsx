@@ -8,7 +8,7 @@ import "./style.css";
 const W = 960, H = 640, ISLAND_X = 480, ISLAND_TOP = 450, ISLAND_HALF = 245;
 const R = 23, ROUND_SECONDS = 30, DROP_COOLDOWN = 180, MAX_FRIENDS_ON_SCREEN = 110, RIDER_JUMP_UP_MS = 100, RIDER_JUMP_MS = 280;
 const SPRITE_POOL_TARGET = 16, SPRITE_POOL_READY = 8;
-type Buddy = { id: number; sprite: GenerationSprites; x: number; y: number; vx: number; vy: number; rotation: number; spin: number; landed: boolean; squash: number; animPhase: number };
+type Buddy = { id: number; sprite: GenerationSprites; x: number; y: number; vx: number; vy: number; rotation: number; spin: number; landed: boolean; squash: number; bounceY: number; bounceVY: number; animPhase: number };
 type ScoreEntry = { score: number; playedAt: number; friendId: string };
 type PendingDrop = { sprite: GenerationSprites | null; x: number; startedAt: number; spin: number; animPhase: number };
 type Game = { friends: Buddy[]; usedSprites: Set<string>; aim: number; startedAt: number | null; endedAt: number | null; lastDrop: number; pendingDrop: PendingDrop | null; nextId: number };
@@ -143,7 +143,7 @@ function drawScene(ctx: CanvasRenderingContext2D, game: Game, riderSprite: Gener
 
   for (const buddy of game.friends) {
     if (buddy.x > -50 && buddy.x < W + 50) {
-      const bob = !reducedMotion && buddy.landed ? Math.sin((now + buddy.animPhase) / 360) * 1.5 : 0;
+      const bob = (!reducedMotion && buddy.landed ? Math.sin((now + buddy.animPhase) / 360) * 1.5 : 0) + (reducedMotion ? 0 : buddy.bounceY);
       const frame = reducedMotion ? 0 : Math.floor((now + buddy.animPhase) / (buddy.landed ? 430 : 120)) % 8;
       ctx.fillStyle = "rgba(0,0,0,.22)"; ctx.beginPath(); ctx.ellipse(buddy.x + 2, buddy.y + R + 2, 19 - Math.max(0, bob) * 1.2, 5, 0, 0, Math.PI * 2); ctx.fill();
       drawFriend(ctx, buddy.sprite, buddy.x, buddy.y, reducedMotion ? 0 : buddy.rotation, !buddy.landed, frame, bob, buddy.squash);
@@ -164,6 +164,11 @@ function simulate(game: Game, dt: number) {
   for (let k = 0; k < steps; k++) {
     for (const b of game.friends) {
       b.squash = Math.max(0, b.squash - step * 3.5);
+      if (b.bounceY > 0 || b.bounceVY > 0) {
+        b.bounceVY -= 680 * step;
+        b.bounceY = Math.max(0, b.bounceY + b.bounceVY * step);
+        if (b.bounceY === 0) b.bounceVY = 0;
+      }
       if (b.landed) continue;
       b.rotation += b.spin * step;
       b.vy = Math.min(b.vy + 1550 * step, 980);
@@ -193,6 +198,10 @@ function simulate(game: Game, dt: number) {
       const relative = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
       if (relative < 0) {
         const impulse = -(1.12 * relative) / ((a.landed ? 0 : 1) + (b.landed ? 0 : 1) || 1);
+        if (Math.abs(relative) > 38) {
+          const hop = clamp(Math.abs(relative) * .12, 24, 72);
+          a.bounceVY = Math.max(a.bounceVY, hop); b.bounceVY = Math.max(b.bounceVY, hop);
+        }
         const squash = Math.min(.32, Math.abs(impulse) / 900);
         if (!a.landed) a.squash = Math.max(a.squash, squash);
         if (!b.landed) b.squash = Math.max(b.squash, squash);
@@ -354,7 +363,7 @@ export default function IslandStack({ friendId, client, paused }: GameComponentP
           const pending = g.pendingDrop; g.pendingDrop = null;
           const { y: anchorY } = nextDropY(g);
           g.friends.push({ id: g.nextId++, sprite: pending.sprite, x: pending.x, y: anchorY + 82, vx: 0, vy: 20,
-            rotation: 0, spin: pending.spin, landed: false, squash: 0, animPhase: pending.animPhase });
+            rotation: 0, spin: pending.spin, landed: false, squash: 0, bounceY: 0, bounceVY: 0, animPhase: pending.animPhase });
           playDropSound();
           setCount(g.friends.filter(friend => friend.y + R >= ISLAND_TOP - 54 && friend.y < H).length);
         }
