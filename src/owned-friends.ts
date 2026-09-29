@@ -23,6 +23,9 @@ const validAddress = (value: unknown): value is Address => typeof value === "str
 const validId = (value: unknown): value is bigint => typeof value === "bigint" && value > 0n && value < 1n << 256n;
 const MAX_TRANSFER_LOGS = 100_000;
 const MAX_OWNED_FRIENDS = 10_000;
+// Robinhood's public RPC rejects eth_getLogs requests spanning more than
+// 10,000,000 blocks. Keep each indexed, owner-filtered query below that cap.
+const TRANSFER_LOG_BLOCK_SPAN = 9_000_000n;
 
 /**
  * Read-only discovery using two indexed, owner-filtered Transfer queries. The
@@ -62,11 +65,21 @@ export async function readOwnedFriends(
     return Object.freeze({ friends: Object.freeze([]), blockNumber, hiddenCount: 0 });
   }
 
-  const query = { address: deployment.generations, event: TRANSFER, fromBlock: 0n, toBlock: blockNumber, strict: true } as const;
-  const [received, sent] = await Promise.all([
-    client.getLogs({ ...query, args: { to: account } }),
-    client.getLogs({ ...query, args: { from: account } }),
-  ]).catch(cause => {
+  const query = { address: deployment.generations, event: TRANSFER, strict: true } as const;
+  const ranges: { fromBlock: bigint; toBlock: bigint }[] = [];
+  for (let fromBlock = 0n; fromBlock <= blockNumber; fromBlock += TRANSFER_LOG_BLOCK_SPAN) {
+    ranges.push({ fromBlock, toBlock: fromBlock + TRANSFER_LOG_BLOCK_SPAN - 1n < blockNumber
+      ? fromBlock + TRANSFER_LOG_BLOCK_SPAN - 1n : blockNumber });
+  }
+  async function queryOwner(field: "to" | "from") {
+    const pages = [];
+    for (const range of ranges) {
+      active();
+      pages.push(await client.getLogs({ ...query, ...range, args: field === "to" ? { to: account } : { from: account } }));
+    }
+    return pages.flat();
+  }
+  const [received, sent] = await Promise.all([queryOwner("to"), queryOwner("from")]).catch(cause => {
     active();
     throw new Error("Could not load this account's Friend transfers. Retry with an RPC that supports owner-filtered history; the SDK will not scan the collection.", { cause });
   });
