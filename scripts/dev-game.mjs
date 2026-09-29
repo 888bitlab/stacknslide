@@ -14,8 +14,10 @@ const packageJson = JSON.parse(await readFile(new URL('../package.json', import.
 const mainnetRpc = 'https://rpc.mainnet.chain.robinhood.com';
 const escapeHtml = value => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const childCsp = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://rpc.mainnet.chain.robinhood.com; base-uri 'none'; form-action 'none'; frame-src 'none'";
+const productionAnalytics = process.env.VERCEL_ENV === 'production'
+  ? '<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments);};</script><script defer src="/_vercel/insights/script.js"></script>' : '';
 const html = (name, title, child = false) => `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${child ? `<meta http-equiv="Content-Security-Policy" content="${childCsp}">` : ''}<title>${escapeHtml(title)}</title><link rel="stylesheet" href="./${name}.css"></head><body><main id="root"></main><script src="./${name}.js"></script></body></html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${child ? `<meta http-equiv="Content-Security-Policy" content="${childCsp}">` : ''}${!child ? productionAnalytics : ''}<title>${escapeHtml(title)}</title><link rel="stylesheet" href="./${name}.css"></head><body><main id="root"></main><script src="./${name}.js"></script></body></html>
 `;
 const outputManifest = '.friendsdk-output.json';
 const standardOutputs = new Set(['index.html', 'game.html', 'runtime.js', 'game.js', 'runtime.css', 'game.css', 'layout.css', 'game-layout.css']);
